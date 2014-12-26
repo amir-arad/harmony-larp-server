@@ -1,0 +1,280 @@
+<?xml version="1.0"?>
+
+<!-- ======================================================================= -->
+<!-- Java embeddable telnet daemon Buildfile                                 -->
+<!-- ======================================================================= -->
+
+<project name="telnetd" default="compile" basedir=".">
+
+   <!-- This property will be overwritten by the import, so
+        we need to make sure it does not happen! -->
+   <property name="version" value="2.0"/>
+
+   <target name="init">
+    <tstamp>
+      <format property="src.timestamp" pattern="dd/MM/yyyy"/>
+    </tstamp>
+
+    <!-- Allow any user specific values to override the defaults -->
+    <property file="build.properties"/>
+    <property file="${user.home}/.build.properties"/>
+
+    <property name="Name" value="telnetd"/>
+	<property name="name" value="telnetd"/>
+
+    
+    <property name="copyright" value="2000-2005 Dieter Wimberger."/>
+    <loadfile property="license" srcFile="${basedir}${file.separator}LICENSE.txt"/>
+
+    <!-- Filters -->
+    <filter token="date" value="${src.timestamp}"/>
+    <filter token="version" value="${version}"/>
+    <filter token="copyright" value="${copyright}"/>
+    <filter token="license" value="${license}"/>
+
+    <property name="src.dir" value="${basedir}${file.separator}src"/>
+    <property name="src.java" value="${src.dir}${file.separator}java"/>
+    <property name="src.resources" value="${src.dir}${file.separator}net${file.separator}wimpi${file.separator}telnetd${file.separator}resources"/>
+    <property name="src.excludes" value="**/dtw/**"/>
+    <property name="lib.dir" value="${basedir}${file.separator}lib${file.separator}"/>
+
+    <property name="build.dir" value="${basedir}${file.separator}build"/>
+    <property name="build.src" value="${build.dir}${file.separator}src"/>
+    <property name="build.classes" value="${build.dir}${file.separator}classes"/>
+    <property name="build.jar" value="${build.dir}${file.separator}${name}.jar"/>
+    <property name="build.classpath"
+        value="${build.classes}${path.separator}
+               ${lib.dir}${file.separator}commons-logging.jar${path.separator}
+               ${lib.dir}${file.separator}log4j.jar${path.separator}"
+
+    />
+
+    <property name="build.docs" value="${build.dir}${file.separator}site"/>
+    <property name="build.javadocs" value="${build.docs}${file.separator}api"/>
+    <property name="build.dist" value="${build.dir}${file.separator}${name}-${version}"/>
+    <property name="build.resources"
+      value="${build.classes}/net/wimpi/telnetd/resources"/>
+
+    <property name="dist.basedir" value="${build.dir}"/>
+
+    <property name="dist.includes" value="${name}-${version}${file.separator}**"/>
+    <property name="dist.excludes"
+      value="**/prj/**,
+      **/dist/**,
+      **/test/**,
+      **/old/**,
+      **/build/**,
+      **/.DS_Store"
+      />
+
+    <property name="packages" value="net.wimpi.telnetd.*"/>
+    <property name="library.includes" value="net${file.separator}**"/>
+    <property name="manifest" value="${basedir}${file.separator}MANIFEST"/>
+
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Basic build targets                                                 -->
+  <!-- =================================================================== -->
+  <target name="prepare-sources" depends="init">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.src}"/>
+    <copy todir="${build.src}" filtering="true">
+      <fileset dir="${src.dir}" excludes="${src.excludes}"/>
+    </copy>
+  </target>
+
+  <target name="compile" depends="init,prepare-sources" description="Compiles the sources. (Default)">
+    <!-- Echo compilation properties -->
+    <echo level="info" message="Compiler    = ${build.compiler}"/>
+    <echo level="info" message="Optimize    = ${compile.optimize}"/>
+    <echo level="info" message="Deprecation = ${compile.deprecation}"/>
+    <echo level="info" message="Debug       = ${compile.debug}"/>
+
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.classes}"/>
+    <javac srcdir="${build.src}"
+      target="1.4"
+      source="1.4"
+      destdir="${build.classes}"
+      classpath="${build.classpath}"
+      debug="${compile.debug}"
+      optimize="${compile.optimize}"
+      deprecation="${compile.deprecation}"
+    />
+    <!-- Copy resource files
+    <mkdir dir="${build.resources}"/>
+    <copy todir="${build.resources}">
+      <fileset dir="${src.resources}">
+        <exclude name="**/.DS_Store"/>
+      </fileset>
+    </copy>
+    -->
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Creates the jar archive                                             -->
+  <!-- =================================================================== -->
+  <target name="jar" depends="init,compile" description="Builds the library.">
+    <mkdir dir="${build.dir}"/>
+    <jar jarfile="${build.jar}"
+      basedir="${build.classes}"
+      includes="${library.includes}"
+      />
+  </target>
+
+
+  <!-- =================================================================== -->
+  <!-- Documentation build targets                                         -->
+  <!-- =================================================================== -->
+  <target name="prepare-docs" depends="init">
+    <mkdir dir="${build.javadocs}"/>
+    <property environment="env"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Creates the API documentation                                       -->
+  <!-- =================================================================== -->
+  <target name="javadocs" depends="prepare-sources,prepare-docs" description="Generates the javadoc API documentation.">
+    <mkdir dir="${build.javadocs}"/>
+    <javadoc packagenames="${packages}"
+      sourcepath="${build.src}"
+      classpath="${build.classpath}"
+      destdir="${build.javadocs}"
+      author="true"
+      version="true"
+      windowtitle="${Name} API"
+      doctitle="${Name} API Documentation"
+      header="&lt;a href=&apos;http://telnetd.sourceforge.net&apos; target=&apos;_top&apos;&gt;TelnetD at SF&lt;/a&gt;"
+      bottom="Copyright &#169; ${copyright}"
+      additionalparam="${javadocs.additionalparam}"
+      />
+  </target>
+
+
+  <!-- =================================================================== -->
+  <!-- Distribution targets                                                -->
+  <!-- =================================================================== -->
+  <target name="prepare-dist" depends="init, prepare-sources, prepare-docs">
+    <property name="dist.src" value="${build.dist}${file.separator}src"/>
+    <property name="dist.lib" value="${build.dist}${file.separator}lib"/>
+    <property name="dist.docs" value="${build.dist}${file.separator}docs"/>
+
+    <mkdir dir="${build.dist}"/>
+    <mkdir dir="${dist.src}"/>
+    <mkdir dir="${dist.lib}"/>
+    <mkdir dir="${dist.docs}"/>
+
+    <!-- Copy sources -->
+    <copy todir="${dist.src}" includeEmptyDirs="false">
+      <fileset dir="${build.src}"/>
+    </copy>
+
+    <!-- Copy documentation -->
+    <copy todir="${dist.docs}" filtering="true" includeEmptyDirs="false">
+      <fileset dir="${build.docs}"/>
+    </copy>
+    <!-- Copy libraries -->
+    <copy todir="${dist.lib}">
+      <fileset dir="${lib.dir}" excludes=""/>
+    </copy>
+    <!-- Copy Readme and License -->
+    <copy file="${basedir}${file.separator}README.txt" todir="${build.dist}"/>
+    <copy file="${basedir}${file.separator}LICENSE.txt" todir="${build.dist}"/>
+
+
+    <!-- Copy build and properties -->
+    <copy file="${basedir}${file.separator}build.xml" todir="${build.dist}"/>
+    <copy file="${basedir}${file.separator}build.properties" todir="${build.dist}"/>
+    <copy file="${basedir}${file.separator}forrest.properties" todir="${build.dist}"/>
+    <copy file="${basedir}${file.separator}telnetd.properties" todir="${build.dist}"/>
+    <copy file="${basedir}${file.separator}log4j.properties" todir="${build.dist}"/>
+     
+  </target>
+
+
+  <target name="dist" depends="prepare-dist" description="Builds a tar-gzip source distribution file.">
+    <tar tarfile="${dist.basedir}${file.separator}${Name}-${version}.tar"
+      basedir="${dist.basedir}"
+      includes="${dist.includes}"
+      excludes="${dist.excludes}"
+      />
+    <gzip zipfile="${dist.basedir}${file.separator}${Name}-${version}.tar.gz" src="${dist.basedir}${file.separator}${Name}-${version}.tar"/>
+    <delete file="${dist.basedir}${file.separator}${Name}-${version}.tar"/>
+  </target>
+
+  <target name="zipdist" depends="prepare-dist" description="Builds a zipped source distribution file.">
+    <zip zipfile="${dist.basedir}${file.separator}${Name}${version}.zip"
+      basedir="${dist.basedir}"
+      includes="${dist.includes}"
+      excludes="${dist.excludes}"
+      />
+  </target>
+
+  <target name="docsdist" depends="init,prepare-dist" description="Builds a zipped documentation distribution file.">
+    <zip zipfile="${dist.basedir}${file.separator}${Name}${version}_docs.zip"
+      basedir="${build.dist}"
+      includes="docs/**"
+      />
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Release target                                                      -->
+  <!-- =================================================================== -->
+  <target name="release"
+    depends="clean-build,docsdist,dist,zipdist" description="Builds a release.">
+    <echo message="Created release ${version}"/>
+  </target>
+
+
+ 
+  <!-- =================================================================== -->
+  <!-- Run test daemon                                                     -->
+  <!-- =================================================================== -->
+  <target name="runit" depends="init,jar" description="Runs a sample application.">
+  	<java
+  		fork="yes" 
+  		classname="net.wimpi.telnetd.TelnetD"
+  		taskname="testtnd"
+  		failonerror="true">
+      <jvmarg value="-Dlog4j.configuration=file://${basedir}${file.separator}log4j.properties"/>
+    	<arg value="file://${basedir}${file.separator}telnetd.properties"/>
+  	    <classpath>
+  	    	<pathelement path="${build.jar}"/>
+          <pathelement path="${lib.dir}/commons-logging.jar"/>
+          <pathelement path="${lib.dir}/log4j.jar"/>
+  	    </classpath>
+  	</java>	
+  </target>
+ 
+  <!-- =================================================================== -->
+  <!-- Cleanup Targets                                                     -->
+  <!-- =================================================================== -->
+
+  <target name="clean-classes" depends="init" description="Cleans up the build classes.">
+    <delete dir="${build.classes}"/>
+  </target>
+
+  <target name="clean-jars" depends="init" description="Cleans up the build libraries.">
+    <delete file="${build.dir}${file.separator}${name}.jar"/>
+    <delete file="${build.dir}${file.separator}${name}beans.jar"/>
+  </target>
+
+  <target name="clean-build" depends="init" description="Cleans up the build directory.">
+    <delete dir="${build.dir}"/>
+  </target>
+
+  <target name="clean-dist" depends="init" description="Cleans up the dist builds.">
+    <delete dir="${build.dist}"/>
+  </target>
+
+  <target name="clean-docs" depends="init" description="Cleans up generated javadocs.">
+    <delete dir="${build.javadocs}"/>
+  </target>
+
+  <target name="clean-all" depends="clean-build,clean-dist, clean-docs" description="Cleans up to distribution state.">
+    <echo level="info" message="Cleaned all."/>
+  </target>
+
+</project>
+

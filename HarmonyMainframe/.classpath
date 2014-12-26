@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="/commons/lib/commons-logging.jar"/>
+	<classpathentry kind="lib" path="/commons/lib/log4j.jar"/>
+	<classpathentry kind="lib" path="config"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/telnetd-2.0"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
